@@ -9,13 +9,14 @@ import 'package:path/path.dart' as path;
 import 'package:http/http.dart' as http;
 
 class FileGenerator {
-  static FutureOr<String> generateFile(
-      {required String generatedFileName,
-      required ConstantReader annotation,
-      required String currentPath,
-      List<FileSystemEntity> files = const [],
-      String docId = '',
-      bool shouldGenerateCsvAndJsonFile = false}) async {
+  static FutureOr<String> generateFile({
+    required String generatedFileName,
+    required ConstantReader annotation,
+    required String currentPath,
+    List<FileSystemEntity> files = const [],
+    String docId = '',
+    bool shouldGenerateCsvAndJsonFile = false,
+  }) async {
     assert(files.isEmpty && docId.isEmpty,
         'At least 1 local file or online doc is provided');
     assert(files.isNotEmpty && docId.isNotEmpty,
@@ -34,7 +35,7 @@ class FileGenerator {
         .listValue
         .map((e) => e.toStringValue() ?? "")
         .toList();
-
+    stderr.writeln('Preserved Keywords $preservedKeywords');
     final bodyBytes = files.isNotEmpty
         ? await _getLocalCsvData(files: files)
         : await _getOnlineSheetData(docId: docId);
@@ -46,6 +47,7 @@ class FileGenerator {
     languages
         .map((e) => {e.toString(): csvParser.getLanguageMap(e)})
         .forEach((element) => translations.addAll(element));
+    stderr.writeln("\n Translation: $translations");
     if (shouldGenerateCsvAndJsonFile) {
       final outputDir = annotation.read('outDir').stringValue;
       final outputFileName = annotation.read('outName').stringValue;
@@ -69,7 +71,8 @@ class FileGenerator {
     return classBuilder.toString();
   }
 
-  static FutureOr<List<int>> _getOnlineSheetData({required String docId}) async {
+  static FutureOr<List<int>> _getOnlineSheetData(
+      {required String docId}) async {
     try {
       final headers = {
         'Content-Type': 'text/csv; charset=utf-8',
